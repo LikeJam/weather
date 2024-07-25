@@ -1,0 +1,40 @@
+version: '3'
+services:
+  php-fpm:
+    platform: linux/x86_64
+    build:
+      context: .
+      dockerfile: infrastructure/docker/phpfpm.Dockerfile
+    volumes:
+      - ./:/var/www/html
+      - /var/www/html/storage/mysql-data
+    links:
+      - mysql
+
+  nginx:
+    image: nginx:1.25.4-alpine3.18
+    volumes:
+      - ./public:/var/www/html/public
+      - ./infrastructure/docker/nginx/conf.d:/etc/nginx/conf.d
+    links:
+      - php-fpm
+    ports:
+      - "80:80"
+    expose:
+      - 80
+
+  mysql:
+    image: mysql:8.3.0
+    platform: linux/x86_64
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=weather
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./storage/mysql-data:/var/lib/mysql
+
+networks:
+  weather-net:
+    driver: bridge
+
